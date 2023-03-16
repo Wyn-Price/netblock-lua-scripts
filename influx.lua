@@ -1,24 +1,31 @@
-local internet = require("internet")
-local secrets = require("secrets")
-local M = {};
+local component = require("component")
+local event = require("event")
+
+local modem = component.modem
+
+local OUT_PORT_REQUEST_ADDRESS = 9001
+local OUT_PORT_SEND_INFLUX = 9002
+
+local IN_PORT_SEND_ADDRESS = 8001
+
+
+print("Attempting to find server...")
+modem.open(IN_PORT_SEND_ADDRESS)
+modem.broadcast(OUT_PORT_REQUEST_ADDRESS)
+local _, _, from = event.pull("modem_message")
+local serverAddress = from;
+print("Server address found at " .. from)
+
+local M = {}
 
 function M.sendMetric(metric, tags, values)
-    local handle = internet.request(
-        "http://localhost:8086/api/v2/write?org=netblock&bucket=minecraft",
-        lineProtocol(metric, tags, values),
-        { Authorization = "Token " .. secrets.apiToken },
-        "POST"
-    )
-
-    local result = ""
-    for chunk in handle do
-        result = result .. chunk
-    end
-    print(result)
+    print("Sending metric to ")
+    local text = lineProtocol(metric, tags, values)
+    modem.send(serverAddress, OUT_PORT_SEND_INFLUX, text)
 end
 
 function lineProtocol(metric, tags, values)
-    local result = formatMetric(metric);
+    local result = formatMetric(metric)
 
     -- Start with empty string to add a , after the metric
     local tagParts = {''}
@@ -39,13 +46,12 @@ function lineProtocol(metric, tags, values)
 end
 
 function formatPart(part)
-    local res = part:gsub("([, =])", "\\%1");
+    local res = part:gsub("([, =])", "\\%1")
     return res
 end
 
 function formatValue(value)
     local type = type(value)
-    print(res)
     -- Types: nil, boolean, number, string, userdata, function, thread, and table
     if type == "boolean" then
         return value and "TRUE" or "FALSE"
@@ -61,8 +67,8 @@ end
 
 -- Replace , and spaces with \%1
 function formatMetric(metric)
-    local res = metric:gsub("([, ])", "\\%1");
+    local res = metric:gsub("([, ])", "\\%1")
     return res
 end
 
-return M;
+return M

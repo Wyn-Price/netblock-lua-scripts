@@ -1,9 +1,55 @@
-    local component = require("component")
-    local event = require("event")
-    local m = component.modem -- get primary modem component
-    m.open(2121)
-    -- Send some message.
-    m.broadcast(2122, "this is a test")
-    -- Wait for a message from another network card.
+local component = require("component")
+local event = require("event")
+local internet = require("internet")
+local secrets = require("secrets")
+
+local modem = component.modem
+
+local IN_PORT_REQUEST_ADDRESS = 9001;
+local IN_PORT_SEND_INFLUX = 9002;
+
+local OUT_PORT_SEND_ADDRESS = 8001;
+
+function openPorts()
+    print("Opening ports...")
+    modem.open(IN_PORT_REQUEST_ADDRESS)
+    modem.open(IN_PORT_SEND_INFLUX)
+    print("Ports opened")
+end
+
+function broadcastAddress()
+    print("Broadcasting address")
+    modem.broadcast(OUT_PORT_SEND_ADDRESS);
+end
+
+function sendToInflux(line)
+    local handle = internet.request(
+        "http://localhost:8086/api/v2/write?org=netblock&bucket=minecraft",
+        line,
+        { Authorization = "Token " .. secrets.apiToken },
+        "POST"
+    )
+
+    local result = ""
+    for chunk in handle do
+        result = result .. chunk
+    end
+    print(result)
+end
+
+function processPacket()
     local _, _, from, port, _, message = event.pull("modem_message")
-    print("Got a message from " .. from .. " on port " .. port .. ": " .. tostring(message))
+    print("Recv from " .. from .. " with port " .. port)
+    if port == IN_PORT_REQUEST_ADDRESS then
+        broadcastAddress()
+    elseif port == IN_PORT_SEND_INFLUX then
+        sendToInflux(message)
+    end
+end
+
+openPorts()
+broadcastAddress()
+
+while true do
+    processPacket()
+end
