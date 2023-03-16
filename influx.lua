@@ -19,7 +19,7 @@ print("Server address found at " .. from)
 local M = {}
 
 function M.sendMetric(metric, tags, values)
-    print("Sending metric to ")
+    print("Sending metric to " .. serverAddress)
     local text = lineProtocol(metric, tags, values)
     modem.send(serverAddress, OUT_PORT_SEND_INFLUX, text)
 end
