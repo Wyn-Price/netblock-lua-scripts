@@ -34,16 +34,24 @@ function sendToInflux(line)
     for chunk in handle do
         result = result .. chunk
     end
-    print(result)
+    -- We need to read the result so the request get's GC'd properly
+    -- ideally we would print this out if it's not empty
+    if result == "invalid" then
+        print("invalid")
+    end
 end
 
 function processPacket()
     local _, _, from, port, _, message = event.pull("modem_message")
-    print("Recv from " .. from .. " with port " .. port)
     if port == IN_PORT_REQUEST_ADDRESS then
         broadcastAddress()
     elseif port == IN_PORT_SEND_INFLUX then
-        sendToInflux(message)
+        print(message)
+        local _, err = pcall(function() sendToInflux(message) end)
+        if err then
+            print("Encountered an error when sending to influx")
+            print(err)
+        end
     end
 end
 

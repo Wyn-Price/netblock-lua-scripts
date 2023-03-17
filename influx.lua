@@ -46,7 +46,7 @@ function lineProtocol(metric, tags, values)
 end
 
 function formatPart(part)
-    local res = part:gsub("([, =])", "\\%1")
+    local res = tostring(part):gsub("([, =])", "\\%1")
     return res
 end
 
@@ -67,7 +67,7 @@ end
 
 -- Replace , and spaces with \%1
 function formatMetric(metric)
-    local res = metric:gsub("([, ])", "\\%1")
+    local res = tostring(metric):gsub("([, ])", "\\%1")
     return res
 end
 
