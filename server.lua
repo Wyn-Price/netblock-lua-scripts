@@ -5,6 +5,8 @@ local secrets = require("secrets")
 
 local modem = component.modem
 
+modem.setWakeMessage("netblock:wakeup")
+
 local IN_PORT_REQUEST_ADDRESS = 9001;
 local IN_PORT_SEND_INFLUX = 9002;
 

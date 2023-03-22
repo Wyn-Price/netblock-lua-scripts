@@ -8,6 +8,7 @@ local OUT_PORT_SEND_INFLUX = 9002
 
 local IN_PORT_SEND_ADDRESS = 8001
 
+modem.setWakeMessage("netblock:wakeup")
 
 print("Attempting to find server...")
 modem.open(IN_PORT_SEND_ADDRESS)
