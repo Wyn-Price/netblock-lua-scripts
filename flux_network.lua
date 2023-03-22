@@ -1,7 +1,7 @@
-local fluxNetwork = require("component").energy_device.getNetworkStats()
 local influx = require("influx")
 
 while true do
+    local fluxNetwork = require("component").energy_device.getNetworkStats()
     influx.sendMetric(
         "flux_network_stats",
         { },
